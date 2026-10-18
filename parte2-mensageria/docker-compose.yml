@@ -1,0 +1,39 @@
+# ============================================================
+#  Infraestrutura da Parte 2
+#   - RabbitMQ (broker)  -> AMQP 5672 | painel http://localhost:15672 (guest/guest)
+#   - PostgreSQL         -> 5432 (mesmo banco da Parte 1: mercado_express)
+#   - Mailpit (SMTP fake)-> SMTP 1025 | caixa de entrada http://localhost:8025
+#  Subir:  docker compose up -d        Parar: docker compose down
+# ============================================================
+services:
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: rabbitmq-mercado
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres-mercado
+    environment:
+      POSTGRES_DB: mercado_express
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: mailpit-mercado
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+volumes:
+  pgdata:

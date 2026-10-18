@@ -1,0 +1,10 @@
+Salve aqui os prints usados no README.md com estes nomes:
+
+01-loja.png              -> /loja com produtos
+02-carrinho.png          -> /carrinho com itens e formulario de pagamento
+03-pedido-aprovado.png   -> pagina do pedido com "Pagamento aprovado"
+04-email.png             -> e-mail de confirmacao aberto no Mailpit (http://localhost:8025) ou no Gmail
+05-dashboard.png         -> /dashboard com graficos
+06-rabbitmq-queues.png   -> aba Queues do RabbitMQ com as 3 filas
+07-postman.png           -> resultado do Collection Runner
+08-postgres.png          -> SELECT em tds_pedidos_mercado e tds_emails_mercado

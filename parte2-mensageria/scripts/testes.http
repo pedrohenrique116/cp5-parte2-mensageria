@@ -1,0 +1,50 @@
+### Testes da Parte 2 - IntelliJ HTTP Client (abra este arquivo no IntelliJ e clique no "play")
+@baseUrl = http://localhost:8081
+
+### 1. Produtos a venda
+GET {{baseUrl}}/api/produtos
+
+### 2. Criar compra (resultado aleatorio)
+POST {{baseUrl}}/api/compras
+Content-Type: application/json
+
+{
+  "clienteNome": "Maria Silva",
+  "clienteEmail": "maria.silva@exemplo.com",
+  "itens": [
+    { "produtoId": 1, "quantidade": 2 },
+    { "produtoId": 7, "quantidade": 3 }
+  ]
+}
+
+### 3. Compra sempre aprovada
+POST {{baseUrl}}/api/compras
+Content-Type: application/json
+
+{
+  "clienteNome": "Joao Aprovado",
+  "clienteEmail": "joao.aprova@exemplo.com",
+  "itens": [ { "produtoId": 3, "quantidade": 1 } ]
+}
+
+### 4. Compra sempre recusada
+POST {{baseUrl}}/api/compras
+Content-Type: application/json
+
+{
+  "clienteNome": "Ana Recusada",
+  "clienteEmail": "ana.recusa@exemplo.com",
+  "itens": [ { "produtoId": 4, "quantidade": 2 } ]
+}
+
+### 5. Consultar pedido 1
+GET {{baseUrl}}/api/compras/1
+
+### 6. Compras, e-mails e dashboard
+GET {{baseUrl}}/api/compras
+
+###
+GET {{baseUrl}}/api/emails
+
+###
+GET {{baseUrl}}/api/dashboard/resumo

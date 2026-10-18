@@ -1,0 +1,128 @@
+{
+  "info": {
+    "_postman_id": "6f1c2b7e-5a4d-4c1e-9d3b-cp5mercado01",
+    "name": "CP5 - Mercado Express x Banco Tranquilo (RabbitMQ)",
+    "description": "Testes da Parte 2: compras, consulta de pagamento, e-mails, dashboard e testes internos pela HTTP API do RabbitMQ. Rode na ordem. Suba antes: docker compose up -d, mercado-backend-api (8081) e banco-tranquilo-worker.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8081" },
+    { "key": "rabbitUrl", "value": "http://localhost:15672" },
+    { "key": "pedidoId", "value": "1" }
+  ],
+  "item": [
+    {
+      "name": "1. Listar produtos a venda",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Status 200', () => pm.response.to.have.status(200));",
+        "pm.test('Tem produtos', () => pm.expect(pm.response.json().length).to.be.above(0));"
+      ]}}],
+      "request": { "method": "GET", "url": "{{baseUrl}}/api/produtos" }
+    },
+    {
+      "name": "2. Criar compra (resultado aleatorio ~85% aprovado)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Status 202 Accepted', () => pm.response.to.have.status(202));",
+        "const body = pm.response.json();",
+        "pm.test('Pedido aguardando o banco', () => pm.expect(body.status).to.eql('AGUARDANDO_PAGAMENTO'));",
+        "pm.collectionVariables.set('pedidoId', body.pedidoId);"
+      ]}}],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"clienteNome\": \"Maria Silva\",\n  \"clienteEmail\": \"maria.silva@exemplo.com\",\n  \"itens\": [\n    { \"produtoId\": 1, \"quantidade\": 2 },\n    { \"produtoId\": 7, \"quantidade\": 3 },\n    { \"produtoId\": 6, \"quantidade\": 1 }\n  ]\n}" },
+        "url": "{{baseUrl}}/api/compras"
+      }
+    },
+    {
+      "name": "3. Consultar status do pedido (aguarde ~3 s)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Status 200', () => pm.response.to.have.status(200));",
+        "const b = pm.response.json();",
+        "console.log('Situacao do pedido', b.numeroPedido, '=>', b.status, b.mensagemBanco);",
+        "pm.test('Banco ja respondeu', () => pm.expect(['APROVADO','RECUSADO']).to.include(b.status));"
+      ]}}],
+      "request": { "method": "GET", "url": "{{baseUrl}}/api/compras/{{pedidoId}}" }
+    },
+    {
+      "name": "4. Compra sempre APROVADA (e-mail com 'aprova')",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Status 202', () => pm.response.to.have.status(202));",
+        "pm.collectionVariables.set('pedidoId', pm.response.json().pedidoId);"
+      ]}}],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"clienteNome\": \"Joao Aprovado\",\n  \"clienteEmail\": \"joao.aprova@exemplo.com\",\n  \"itens\": [\n    { \"produtoId\": 3, \"quantidade\": 1 },\n    { \"produtoId\": 10, \"quantidade\": 6 }\n  ]\n}" },
+        "url": "{{baseUrl}}/api/compras"
+      }
+    },
+    {
+      "name": "5. Compra sempre RECUSADA (e-mail com 'recusa')",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Status 202', () => pm.response.to.have.status(202));",
+        "pm.collectionVariables.set('pedidoId', pm.response.json().pedidoId);"
+      ]}}],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"clienteNome\": \"Ana Recusada\",\n  \"clienteEmail\": \"ana.recusa@exemplo.com\",\n  \"itens\": [ { \"produtoId\": 4, \"quantidade\": 2 } ]\n}" },
+        "url": "{{baseUrl}}/api/compras"
+      }
+    },
+    {
+      "name": "6. Compra acima do limite (R$ 500) - recusada",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"clienteNome\": \"Carlos Limite\",\n  \"clienteEmail\": \"carlos@exemplo.com\",\n  \"itens\": [ { \"produtoId\": 5, \"quantidade\": 15 } ]\n}" },
+        "url": "{{baseUrl}}/api/compras"
+      }
+    },
+    {
+      "name": "7. Compra invalida (validacao 400)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Status 400', () => pm.response.to.have.status(400));"
+      ]}}],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"clienteNome\": \"\",\n  \"clienteEmail\": \"email-invalido\",\n  \"itens\": []\n}" },
+        "url": "{{baseUrl}}/api/compras"
+      }
+    },
+    {
+      "name": "8. Endpoint da aula (POST /pagamentos)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"clienteNome\": \"Professor\",\n  \"clienteEmail\": \"professor@fiap.com.br\",\n  \"itens\": [ { \"produtoId\": 2, \"quantidade\": 1 } ]\n}" },
+        "url": "{{baseUrl}}/pagamentos"
+      }
+    },
+    { "name": "9. Listar todas as compras", "request": { "method": "GET", "url": "{{baseUrl}}/api/compras" } },
+    { "name": "10. Listar e-mails enviados (registro no PostgreSQL)", "request": { "method": "GET", "url": "{{baseUrl}}/api/emails" } },
+    { "name": "11. Resumo do dashboard (vendas, lucro, estoque)", "request": { "method": "GET", "url": "{{baseUrl}}/api/dashboard/resumo" } },
+    {
+      "name": "12. [RabbitMQ] Status das filas (HTTP API do Management)",
+      "request": {
+        "auth": { "type": "basic", "basic": [ { "key": "username", "value": "guest" }, { "key": "password", "value": "guest" } ] },
+        "method": "GET",
+        "url": "{{rabbitUrl}}/api/queues"
+      }
+    },
+    {
+      "name": "13. [RabbitMQ] Publicar direto na pagamento-request-exchange",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Mensagem roteada para a fila', () => pm.expect(pm.response.json().routed).to.eql(true));"
+      ]}}],
+      "request": {
+        "auth": { "type": "basic", "basic": [ { "key": "username", "value": "guest" }, { "key": "password", "value": "guest" } ] },
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"properties\": { \"content_type\": \"application/json\", \"delivery_mode\": 2 },\n  \"routing_key\": \"pagamento-request-rout-key\",\n  \"payload\": \"{\\\"pedidoId\\\":999,\\\"numeroPedido\\\":\\\"TESTE-RABBIT\\\",\\\"clienteNome\\\":\\\"Teste Monitor\\\",\\\"clienteEmail\\\":\\\"monitor.aprova@exemplo.com\\\",\\\"valor\\\":42.50,\\\"quantidadeItens\\\":1}\",\n  \"payload_encoding\": \"string\"\n}" },
+        "url": "{{rabbitUrl}}/api/exchanges/%2F/pagamento-request-exchange/publish"
+      }
+    }
+  ]
+}

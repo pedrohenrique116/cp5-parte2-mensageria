@@ -1,0 +1,20 @@
+### Listar produtos (pra pegar IDs válidos)
+GET http://localhost:8081/api/produtos
+
+### Fazer uma compra
+POST http://localhost:8081/api/compras
+Content-Type: application/json
+
+{
+  "clienteNome": "Maria Silva",
+  "clienteEmail": "maria@exemplo.com",
+  "itens": [
+    { "produtoId": 1, "quantidade": 2 }
+  ]
+}
+
+### Consultar o pedido (troca o 1 pelo id que veio na resposta acima)
+GET http://localhost:8081/api/compras/1
+
+### Ver dashboard
+GET http://localhost:8081/api/dashboard/resumo
