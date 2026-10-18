@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Pedido ' + ${pedido.numeroPedido})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar('')}"></header>
+
+<main class="container">
+    <div class="page-header">
+        <div>
+            <h1 th:text="'Pedido ' + ${pedido.numeroPedido}">Pedido</h1>
+            <p th:text="'Feito por ' + ${pedido.clienteNome} + ' em ' + ${#temporals.format(pedido.criadoEm, 'dd/MM/yyyy HH:mm:ss')}">.</p>
+        </div>
+        <a class="btn btn-ghost" th:href="@{/loja}">Voltar para a loja</a>
+    </div>
+
+    <!-- Status do pagamento (atualiza sozinho enquanto o banco nao responde) -->
+    <section class="painel" th:if="${pedido.aguardando}" aria-live="polite">
+        <h2>Aguardando o Banco Tranquilo</h2>
+        <p>O pedido foi salvo e o pagamento está na fila <code>pagamento-request-queue</code>.
+           Esta página atualiza a cada 3 segundos até a resposta chegar.</p>
+        <span class="selo selo-espera">Aguardando o banco</span>
+    </section>
+
+    <section class="painel" th:if="${pedido.status.name() == 'APROVADO'}">
+        <h2>Pagamento aprovado</h2>
+        <p th:text="'Enviamos a confirmação para ' + ${pedido.clienteEmail} + '.'">.</p>
+        <div class="acoes">
+            <span class="selo selo-ok">Pagamento aprovado</span>
+            <span class="selo" th:text="'Autorização ' + ${pedido.codigoAutorizacao}">Autorização</span>
+        </div>
+    </section>
+
+    <section class="painel" th:if="${pedido.status.name() == 'RECUSADO'}">
+        <h2>Pagamento recusado</h2>
+        <p th:text="'Motivo informado pelo banco: ' + ${pedido.mensagemBanco} + '. Os produtos voltaram ao estoque.'">.</p>
+        <div class="acoes">
+            <span class="selo selo-alerta">Pagamento recusado</span>
+            <a class="btn btn-primary btn-sm" th:href="@{/loja}">Tentar uma nova compra</a>
+        </div>
+    </section>
+
+    <section class="painel">
+        <h3>Itens do pedido</h3>
+        <div class="tabela-wrap">
+            <table>
+                <thead><tr><th>Produto</th><th class="num">Qtd.</th><th class="num">Preço</th><th class="num">Subtotal</th></tr></thead>
+                <tbody>
+                <tr th:each="i : ${pedido.itens}">
+                    <td th:text="${i.nomeProduto}">Produto</td>
+                    <td class="num" th:text="${i.quantidade}">1</td>
+                    <td class="num" th:text="'R$ ' + ${#numbers.formatDecimal(i.precoUnitario, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</td>
+                    <td class="num" th:text="'R$ ' + ${#numbers.formatDecimal(i.subtotal, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <p class="mt"><strong>Total: </strong>
+            <span class="etiqueta"><span class="moeda">R$</span>
+                <span th:text="${#numbers.formatDecimal(pedido.valorTotal, 1, 'POINT', 2, 'COMMA')}">0,00</span></span>
+        </p>
+    </section>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<script th:if="${pedido.aguardando}">setTimeout(function () { location.reload(); }, 3000);</script>
+</body>
+</html>

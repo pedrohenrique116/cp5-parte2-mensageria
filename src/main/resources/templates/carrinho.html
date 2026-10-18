@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Carrinho')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar('carrinho')}"></header>
+
+<main class="container">
+    <div class="page-header">
+        <div>
+            <h1>Seu carrinho</h1>
+            <p th:text="${resumo.quantidadeItens} + ' itens'">0 itens</p>
+        </div>
+        <a class="btn btn-ghost" th:href="@{/loja}">Continuar comprando</a>
+    </div>
+
+    <div th:replace="~{fragments/layout :: mensagens}"></div>
+
+    <div class="vazio" th:if="${resumo.vazio}">
+        <h3>O carrinho está vazio</h3>
+        <p class="muted">Adicione produtos na loja para finalizar uma compra.</p>
+        <a class="btn btn-primary" th:href="@{/loja}">Ir para a loja</a>
+    </div>
+
+    <div class="detalhe" th:unless="${resumo.vazio}">
+        <section>
+            <div class="tabela-wrap">
+                <table>
+                    <thead>
+                    <tr><th>Produto</th><th class="num">Preço</th><th>Quantidade</th><th class="num">Subtotal</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="l : ${resumo.linhas}">
+                        <td>
+                            <strong th:text="${l.produto.nome}">Produto</strong><br>
+                            <span class="small muted" th:text="${l.produto.categoria.descricao}">Categoria</span>
+                        </td>
+                        <td class="num" th:text="'R$ ' + ${#numbers.formatDecimal(l.produto.precoVenda, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</td>
+                        <td>
+                            <form th:action="@{/carrinho/atualizar}" method="post" class="acoes">
+                                <input type="hidden" name="produtoId" th:value="${l.produto.id}">
+                                <input type="number" name="quantidade" min="0" th:value="${l.quantidade}"
+                                       aria-label="Quantidade" style="width:4.5rem">
+                                <button type="submit" class="btn btn-ghost btn-sm">Atualizar</button>
+                            </form>
+                        </td>
+                        <td class="num" th:text="'R$ ' + ${#numbers.formatDecimal(l.subtotal, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</td>
+                        <td>
+                            <form th:action="@{/carrinho/remover}" method="post" class="inline">
+                                <input type="hidden" name="produtoId" th:value="${l.produto.id}">
+                                <button type="submit" class="btn btn-danger btn-sm">Remover</button>
+                            </form>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="painel">
+            <h2>Finalizar compra</h2>
+            <p class="muted small">O pagamento é enviado ao Banco Tranquilo pela fila
+               <code>pagamento-request-queue</code>. Se for aprovado, você recebe um e-mail de confirmação.</p>
+            <p>Total a pagar</p>
+            <span class="etiqueta etiqueta-grande">
+                <span class="moeda">R$</span>
+                <span th:text="${#numbers.formatDecimal(resumo.total, 1, 'POINT', 2, 'COMMA')}">0,00</span>
+            </span>
+
+            <form th:action="@{/carrinho/finalizar}" method="post" class="mt" style="display:flex;flex-direction:column;gap:1rem">
+                <div class="campo">
+                    <label for="clienteNome">Seu nome</label>
+                    <input type="text" id="clienteNome" name="clienteNome" required autocomplete="name"
+                           th:value="${clienteNome}">
+                </div>
+                <div class="campo">
+                    <label for="clienteEmail">E-mail para a confirmação</label>
+                    <input type="email" id="clienteEmail" name="clienteEmail" required autocomplete="email"
+                           th:value="${clienteEmail}" placeholder="nome@exemplo.com">
+                    <span class="dica">Teste: e-mails com "aprova" sempre aprovam; com "recusa" sempre recusam.</span>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Pagar com Banco Tranquilo</button>
+            </form>
+        </section>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

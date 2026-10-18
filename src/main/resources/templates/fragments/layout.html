@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+
+<head th:fragment="head(titulo)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${titulo} + ' | Mercado Express'">Mercado Express</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/img/favicon.svg}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Public+Sans:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<header th:fragment="navbar(ativo)" class="navbar">
+    <div class="container navbar-inner">
+        <a class="brand" th:href="@{/loja}" aria-label="Mercado Express - loja">
+            <span class="brand-mark" aria-hidden="true">ME</span> Mercado Express
+        </a>
+        <nav class="nav-links" aria-label="Menu principal">
+            <a th:href="@{/loja}" th:classappend="${ativo == 'loja'} ? 'ativo'">Loja</a>
+            <a th:href="@{/carrinho}" th:classappend="${ativo == 'carrinho'} ? 'ativo'">
+                Carrinho <span class="contador" th:text="${qtdCarrinho ?: 0}">0</span>
+            </a>
+            <a th:href="@{/dashboard}" th:classappend="${ativo == 'dashboard'} ? 'ativo'">Dashboard da gerência</a>
+        </nav>
+        <div class="nav-user small muted">Pagamentos via Banco Tranquilo</div>
+    </div>
+</header>
+
+<div th:fragment="mensagens">
+    <div class="alerta-msg alerta-sucesso" role="status" th:if="${sucesso}" th:text="${sucesso}"></div>
+    <div class="alerta-msg alerta-erro" role="alert" th:if="${erro}" th:text="${erro}"></div>
+</div>
+
+<footer th:fragment="footer" class="footer">
+    <div class="container">
+        <span>Mercado Express · CP5 Parte 2 · Microsserviços com RabbitMQ</span>
+        <span>
+            <a href="http://localhost:15672" target="_blank" rel="noopener">Painel RabbitMQ</a> ·
+            <a href="http://localhost:8025" target="_blank" rel="noopener">Caixa de e-mails (Mailpit)</a>
+        </span>
+    </div>
+</footer>
+</body>
+</html>
