@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Pagamento confirmado</title>
+</head>
+<body style="margin:0;padding:0;background:#f3f5ee;font-family:Arial,Helvetica,sans-serif;color:#1a2118;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f5ee;padding:24px 0;">
+    <tr>
+        <td align="center">
+            <table role="presentation" width="600" cellpadding="0" cellspacing="0"
+                   style="max-width:600px;width:100%;background:#ffffff;border:1px solid #d6dccf;border-radius:10px;overflow:hidden;">
+                <tr>
+                    <td style="background:#1e5631;padding:20px 28px;color:#ffffff;">
+                        <span style="font-size:20px;font-weight:bold;">Mercado Express</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:28px;">
+                        <h1 style="font-size:22px;margin:0 0 12px;">Pagamento confirmado!</h1>
+                        <p style="margin:0 0 16px;line-height:1.5;">
+                            Olá, <strong th:text="${pedido.clienteNome}">Cliente</strong>. O Banco Tranquilo aprovou o
+                            pagamento do pedido <strong th:text="${pedido.numeroPedido}">MX-000</strong>.
+                        </p>
+                        <p style="margin:0 0 20px;">
+                            <span style="display:inline-block;background:#ffd23f;padding:8px 14px;border-radius:6px;font-size:20px;font-weight:bold;"
+                                  th:text="'R$ ' + ${#numbers.formatDecimal(pedido.valorTotal, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</span>
+                        </p>
+                        <table role="presentation" width="100%" cellpadding="8" cellspacing="0"
+                               style="border-collapse:collapse;font-size:14px;">
+                            <tr style="background:#f3f5ee;">
+                                <th align="left">Produto</th><th align="right">Qtd.</th><th align="right">Subtotal</th>
+                            </tr>
+                            <tr th:each="i : ${pedido.itens}" style="border-bottom:1px solid #d6dccf;">
+                                <td th:text="${i.nomeProduto}">Produto</td>
+                                <td align="right" th:text="${i.quantidade}">1</td>
+                                <td align="right" th:text="'R$ ' + ${#numbers.formatDecimal(i.subtotal, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</td>
+                            </tr>
+                        </table>
+                        <p style="margin:20px 0 0;font-size:14px;color:#5b6656;line-height:1.5;">
+                            Código de autorização: <strong th:text="${pedido.codigoAutorizacao}">BT-000</strong><br>
+                            Data da compra: <span th:text="${#temporals.format(pedido.criadoEm, 'dd/MM/yyyy HH:mm')}">-</span>
+                        </p>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:16px 28px;background:#f3f5ee;font-size:12px;color:#5b6656;">
+                        Este é um aviso automático de confirmação de pagamento. Não responda este e-mail.
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

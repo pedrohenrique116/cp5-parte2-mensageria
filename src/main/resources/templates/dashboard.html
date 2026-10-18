@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Dashboard da gerência')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar('dashboard')}"></header>
+
+<main class="container">
+    <div class="page-header">
+        <div>
+            <h1>Dashboard da gerência</h1>
+            <p>Compras, vendas, lucro e estoque do Mercado Express. Faturamento e lucro consideram só pagamentos aprovados.</p>
+        </div>
+        <a class="btn btn-ghost" th:href="@{/dashboard}">Atualizar dados</a>
+    </div>
+
+    <div class="grade grade-4">
+        <div class="indicador destaque">
+            <p class="indicador-rotulo">Faturamento</p>
+            <p class="indicador-valor" th:text="'R$ ' + ${#numbers.formatDecimal(d.faturamento, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
+        </div>
+        <div class="indicador">
+            <p class="indicador-rotulo">Lucro bruto</p>
+            <p class="indicador-valor" th:text="'R$ ' + ${#numbers.formatDecimal(d.lucro, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
+        </div>
+        <div class="indicador">
+            <p class="indicador-rotulo">Ticket médio</p>
+            <p class="indicador-valor" th:text="'R$ ' + ${#numbers.formatDecimal(d.ticketMedio, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</p>
+        </div>
+        <div class="indicador">
+            <p class="indicador-rotulo">Aprovação no banco</p>
+            <p class="indicador-valor" th:text="${d.taxaAprovacao} + '%'">0%</p>
+        </div>
+        <div class="indicador">
+            <p class="indicador-rotulo">Pedidos (aprovados / recusados / na fila)</p>
+            <p class="indicador-valor" th:text="${d.aprovados} + ' / ' + ${d.recusados} + ' / ' + ${d.aguardando}">0 / 0 / 0</p>
+        </div>
+        <div class="indicador">
+            <p class="indicador-rotulo">E-mails de confirmação enviados</p>
+            <p class="indicador-valor" th:text="${d.emailsEnviados}">0</p>
+        </div>
+        <div class="indicador" th:classappend="${d.emailsComFalha > 0} ? 'alerta'">
+            <p class="indicador-rotulo">E-mails com falha</p>
+            <p class="indicador-valor" th:text="${d.emailsComFalha}">0</p>
+        </div>
+        <div class="indicador" th:classappend="${d.produtosEstoqueBaixo > 0} ? 'alerta'">
+            <p class="indicador-rotulo">Produtos com estoque baixo</p>
+            <p class="indicador-valor" th:text="${d.produtosEstoqueBaixo}">0</p>
+        </div>
+    </div>
+
+    <div class="grade grade-2 mt">
+        <section class="painel">
+            <h2>Vendas dos últimos 7 dias</h2>
+            <div class="grafico"><canvas id="graficoVendas" aria-label="Receita e lucro por dia"></canvas></div>
+        </section>
+        <section class="painel">
+            <h2>Situação dos pagamentos</h2>
+            <div class="grafico"><canvas id="graficoStatus" aria-label="Pedidos por status"></canvas></div>
+        </section>
+        <section class="painel">
+            <h2>Produtos mais vendidos</h2>
+            <div class="grafico"><canvas id="graficoTop" aria-label="Unidades vendidas por produto"></canvas></div>
+        </section>
+        <section class="painel">
+            <h2>Receita por corredor</h2>
+            <div class="grafico"><canvas id="graficoCategorias" aria-label="Receita por categoria"></canvas></div>
+        </section>
+    </div>
+
+    <section class="painel mt">
+        <h2>Estoque atual</h2>
+        <p class="muted small">Barras vermelhas indicam 5 unidades ou menos.</p>
+        <div class="grafico" style="height:340px"><canvas id="graficoEstoque" aria-label="Estoque por produto"></canvas></div>
+    </section>
+
+    <div class="grade grade-2 mt">
+        <section class="painel">
+            <h2>Últimas compras</h2>
+            <p th:if="${#lists.isEmpty(d.ultimosPedidos)}" class="muted">Nenhuma compra ainda. Faça uma pela loja ou pelo Postman.</p>
+            <div class="tabela-wrap" th:unless="${#lists.isEmpty(d.ultimosPedidos)}">
+                <table>
+                    <thead><tr><th>Pedido</th><th>Cliente</th><th class="num">Total</th><th>Situação</th></tr></thead>
+                    <tbody>
+                    <tr th:each="p : ${d.ultimosPedidos}">
+                        <td><a th:href="@{/pedidos/{id}(id=${p.id})}" th:text="${p.numeroPedido}">MX</a></td>
+                        <td th:text="${p.clienteNome}">Cliente</td>
+                        <td class="num" th:text="'R$ ' + ${#numbers.formatDecimal(p.valorTotal, 1, 'POINT', 2, 'COMMA')}">R$ 0</td>
+                        <td><span class="selo"
+                                  th:classappend="${p.status.name() == 'APROVADO'} ? 'selo-ok' : (${p.status.name() == 'RECUSADO'} ? 'selo-alerta' : 'selo-espera')"
+                                  th:text="${p.status.descricao}">Status</span></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="painel">
+            <h2>E-mails enviados</h2>
+            <p class="muted small">Registro da tabela <code>tds_emails_mercado</code>.</p>
+            <p th:if="${#lists.isEmpty(d.ultimosEmails)}" class="muted">Nenhum e-mail enviado ainda.</p>
+            <div class="tabela-wrap" th:unless="${#lists.isEmpty(d.ultimosEmails)}">
+                <table>
+                    <thead><tr><th>Para</th><th>Pedido</th><th>Quando</th><th>Envio</th></tr></thead>
+                    <tbody>
+                    <tr th:each="e : ${d.ultimosEmails}">
+                        <td th:text="${e.destinatario}">email</td>
+                        <td th:text="${e.numeroPedido}">MX</td>
+                        <td th:text="${#temporals.format(e.enviadoEm, 'dd/MM HH:mm')}">-</td>
+                        <td><span class="selo" th:classappend="${e.status.name() == 'ENVIADO'} ? 'selo-ok' : 'selo-alerta'"
+                                  th:text="${e.status.name() == 'ENVIADO'} ? 'Enviado' : 'Falhou'"
+                                  th:title="${e.erro}">Enviado</span></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+<script th:inline="javascript">
+    const g = /*[[${d.graficos}]]*/ {};
+    const cores = { verde: '#1e5631', etiqueta: '#ffd23f', tomate: '#c8102e', azul: '#1d4e89', linha: '#d6dccf' };
+    const paleta = ['#1e5631', '#ffd23f', '#1d4e89', '#c8102e', '#6b8f71', '#e6b800', '#8aa6c9', '#5b6656'];
+    const reais = v => 'R$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    Chart.defaults.font.family = '"Public Sans", system-ui, sans-serif';
+    Chart.defaults.color = '#5b6656';
+    Chart.defaults.maintainAspectRatio = false;
+
+    new Chart(document.getElementById('graficoVendas'), {
+        type: 'bar',
+        data: {
+            labels: g.vendasPorDia.labels,
+            datasets: [
+                { label: 'Receita', data: g.vendasPorDia.receita, backgroundColor: cores.verde, borderRadius: 4 },
+                { label: 'Lucro', data: g.vendasPorDia.lucro, backgroundColor: cores.etiqueta, borderRadius: 4 }
+            ]
+        },
+        options: { plugins: { tooltip: { callbacks: { label: c => c.dataset.label + ': ' + reais(c.raw) } } },
+                   scales: { y: { ticks: { callback: v => reais(v) } } } }
+    });
+
+    new Chart(document.getElementById('graficoStatus'), {
+        type: 'doughnut',
+        data: { labels: g.status.labels,
+                datasets: [{ data: g.status.valores, backgroundColor: [cores.verde, cores.tomate, cores.etiqueta] }] },
+        options: { plugins: { legend: { position: 'bottom' } } }
+    });
+
+    new Chart(document.getElementById('graficoTop'), {
+        type: 'bar',
+        data: { labels: g.topProdutos.labels,
+                datasets: [{ label: 'Unidades vendidas', data: g.topProdutos.valores, backgroundColor: cores.azul, borderRadius: 4 }] },
+        options: { indexAxis: 'y', plugins: { legend: { display: false } } }
+    });
+
+    new Chart(document.getElementById('graficoCategorias'), {
+        type: 'pie',
+        data: { labels: g.categorias.labels,
+                datasets: [{ data: g.categorias.valores, backgroundColor: paleta }] },
+        options: { plugins: { legend: { position: 'bottom' },
+                   tooltip: { callbacks: { label: c => c.label + ': ' + reais(c.raw) } } } }
+    });
+
+    new Chart(document.getElementById('graficoEstoque'), {
+        type: 'bar',
+        data: { labels: g.estoque.labels,
+                datasets: [{ label: 'Em estoque', data: g.estoque.valores, borderRadius: 4,
+                             backgroundColor: g.estoque.baixo.map(b => b ? cores.tomate : cores.verde) }] },
+        options: { plugins: { legend: { display: false } } }
+    });
+</script>
+</body>
+</html>

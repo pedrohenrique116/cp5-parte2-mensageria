@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Loja')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar('loja')}"></header>
+
+<main class="container">
+    <div class="page-header">
+        <div>
+            <h1>Faça suas compras</h1>
+            <p>Escolha os produtos, confira o carrinho e pague com o Banco Tranquilo.</p>
+        </div>
+        <a class="btn btn-tag" th:href="@{/carrinho}">
+            Ir para o carrinho <span class="contador" th:text="${qtdCarrinho}">0</span>
+        </a>
+    </div>
+
+    <div th:replace="~{fragments/layout :: mensagens}"></div>
+
+    <form class="filtros" th:action="@{/loja}" method="get">
+        <div class="campo">
+            <label for="categoria">Corredor</label>
+            <select id="categoria" name="categoria" onchange="this.form.submit()">
+                <option value="">Todos os corredores</option>
+                <option th:each="c : ${categorias}" th:value="${c}" th:text="${c.descricao}"
+                        th:selected="${c == categoriaSelecionada}">Categoria</option>
+            </select>
+        </div>
+        <noscript><button type="submit" class="btn btn-primary">Filtrar</button></noscript>
+    </form>
+
+    <div class="vazio" th:if="${#lists.isEmpty(produtos)}">
+        <h3>Nenhum produto neste corredor</h3>
+        <a class="btn btn-primary" th:href="@{/loja}">Ver todos os produtos</a>
+    </div>
+
+    <div class="gondola">
+        <article class="produto" th:each="p : ${produtos}">
+            <p class="produto-cat" th:text="${p.categoria.descricao}">Categoria</p>
+            <h3 th:text="${p.nome}">Produto</h3>
+            <div>
+                <span class="etiqueta">
+                    <span class="moeda">R$</span>
+                    <span th:text="${#numbers.formatDecimal(p.precoVenda, 1, 'POINT', 2, 'COMMA')}">0,00</span>
+                    <span class="por" th:text="'/' + ${p.unidade}">/un</span>
+                </span>
+            </div>
+            <span class="selo" th:classappend="${p.estoqueBaixo} ? 'selo-alerta' : 'selo-ok'"
+                  th:text="${p.quantidadeEstoque > 0} ? ${p.quantidadeEstoque} + ' disponíveis' : 'Esgotado'">0</span>
+            <form class="produto-rodape" th:action="@{/carrinho/adicionar}" method="post">
+                <input type="hidden" name="produtoId" th:value="${p.id}">
+                <label class="sr-only" th:for="'qtd-' + ${p.id}">Quantidade</label>
+                <input type="number" name="quantidade" value="1" min="1" th:max="${p.quantidadeEstoque}"
+                       th:id="'qtd-' + ${p.id}" style="width:5rem" th:disabled="${p.quantidadeEstoque < 1}">
+                <button type="submit" class="btn btn-primary btn-sm"
+                        th:disabled="${p.quantidadeEstoque < 1}">Adicionar ao carrinho</button>
+            </form>
+        </article>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

@@ -1,0 +1,77 @@
+# ============================================================
+#  Mercado Express - Back End API (CP5 Parte 2)
+#  Porta 8081 para poder rodar junto com a Parte 1 (porta 8080).
+# ============================================================
+server:
+  port: ${PORT:8081}
+
+spring:
+  application:
+    name: mercado-backend-api
+
+  # Mesmo banco PostgreSQL da Parte 1 (tabela de produtos compartilhada)
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:mercado_express}?sslmode=${DB_SSLMODE:disable}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+
+  thymeleaf:
+    cache: false
+
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+    virtual-host: ${RABBITMQ_VHOST:/}
+    # Para LavinMQ/CloudAMQP use: addresses: amqps://usuario:senha@host/vhost
+    listener:
+      simple:
+        default-requeue-rejected: false
+        retry:
+          enabled: true
+          max-attempts: 3
+          initial-interval: 1000ms
+
+  # SMTP: por padrao usa o Mailpit do docker-compose (caixa de entrada em http://localhost:8025).
+  # Para Gmail: MAIL_HOST=smtp.gmail.com MAIL_PORT=587 MAIL_SMTP_AUTH=true MAIL_STARTTLS=true
+  #             MAIL_USERNAME=seu@gmail.com MAIL_PASSWORD=<senha de app de 16 letras>
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail.smtp.auth: ${MAIL_SMTP_AUTH:false}
+      mail.smtp.starttls.enable: ${MAIL_STARTTLS:false}
+      mail.smtp.connectiontimeout: 5000
+      mail.smtp.timeout: 5000
+      mail.smtp.writetimeout: 5000
+
+# Nomes iguais aos criados na aula (exchanges, queues e routing keys)
+mq:
+  exchanges:
+    request: pagamento-request-exchange
+    sucesso: pagamento-response-sucesso-exchange
+    erro: pagamento-response-erro-exchange
+  queues:
+    request: pagamento-request-queue
+    sucesso: pagamento-response-sucesso-queue
+    erro: pagamento-response-erro-queue
+  routing-keys:
+    request: pagamento-request-rout-key
+    sucesso: pagamento-response-sucesso-rout-key
+    erro: pagamento-response-erro-rout-key
+
+app:
+  mail:
+    remetente: ${MAIL_FROM:Mercado Express <nao-responda@mercadoexpress.com>}
+
+logging:
+  level:
+    br.com.fiap.mercadoexpress: INFO
